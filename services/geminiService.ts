@@ -1,10 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Subtask } from "../types.ts";
 
-const API_KEY = process.env.API_KEY;
+// ✅ Use Vite syntax so the key is available in the browser
+const API_KEY = import.meta.env.VITE_API_KEY;
 
 if (!API_KEY) {
-  console.warn("API_KEY is not set. Please set it in your environment variables.");
+  console.warn("VITE_API_KEY is not set. Please add it in your Vercel Environment Variables.");
 }
 
 const ai = new GoogleGenAI({ apiKey: API_KEY! });
