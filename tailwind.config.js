@@ -2,7 +2,7 @@
 export default {
   content: [
     "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./**/*.{js,ts,jsx,tsx}"  // 👈 this line now includes ALL folders (root, components, hooks, etc.)
   ],
   theme: {
     extend: {},
