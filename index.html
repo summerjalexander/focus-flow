@@ -2,9 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ADHD Focus Flow</title>
+
+    <!-- ✅ Favicon -->
+    <link rel="icon" type="image/png" href="/favicon-32x32.png" />
+
+    <!-- ✅ Google Font -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ✅ Import Map (for AI Studio compatibility, optional if using local npm) -->
     <script type="importmap">
       {
         "imports": {
@@ -18,9 +28,45 @@
         }
       }
     </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
-  </body>
-</html>
+
+    <!-- ✅ Custom Inline Styles -->
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+
+      @keyframes draw-check {
+        from {
+          stroke-dashoffset: 25;
+        }
+        to {
+          stroke-dashoffset: 0;
+        }
+      }
+
+      .checkmark-path {
+        stroke-dasharray: 25;
+        stroke-dashoffset: 25;
+        animation: draw-check 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+      }
+
+      @keyframes celebrate-bg {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      .animate-celebrate {
+        background-image: linear-gradient(
+          90deg,
+          rgba(0, 115, 112, 0.2) 0%,
+          rgba(238, 102, 80, 0.4) 25%,
+          rgba(0, 115, 112, 0.4) 50%,
+          rgba(238, 102, 80, 0.4) 75%,
+          rgba(0, 115, 112, 0.2) 100%
+        );
+        background-size: 200% 100%;
+        animation: ce
