@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ADHD Focus Flow</title>
 
-    <!-- ✅ Favicon -->
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/favicon-32x32.png" />
 
-    <!-- ✅ Google Font -->
+    <!-- Google Font -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
-    <!-- ✅ Import Map (for AI Studio compatibility, optional if using local npm) -->
+    <!-- Import map (AI Studio compatibility) -->
     <script type="importmap">
       {
         "imports": {
@@ -29,7 +29,6 @@
       }
     </script>
 
-    <!-- ✅ Custom Inline Styles -->
     <style>
       body {
         font-family: 'Inter', sans-serif;
@@ -47,7 +46,8 @@
       .checkmark-path {
         stroke-dasharray: 25;
         stroke-dashoffset: 25;
-        animation: draw-check 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+        animation: draw-check 0.3s
+          cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
       }
 
       @keyframes celebrate-bg {
@@ -69,4 +69,14 @@
           rgba(0, 115, 112, 0.2) 100%
         );
         background-size: 200% 100%;
-        animation: ce
+        animation: celebrate-bg 1.5s ease-in-out forwards;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="root"></div>
+    <!-- Correct entry path for Vite -->
+    <script type="module" src="/src/index.tsx"></script>
+  </body>
+</html>
