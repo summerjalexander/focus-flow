@@ -239,7 +239,7 @@ const TaskItem: React.FC<TaskItemProps> = (props) => {
                         onChange={handleDueDateChange}
                         onBlur={() => setIsEditingDueDate(false)}
                         autoFocus
-                        className="bg-transparent border-b border-[#69adaf] text-xs text-[#f7f7f7] focus:outline-none p-0"
+                        className="bg-transparent border-b border-[#69adaf] text-xs text-[#f7f7f7] focus:outline-none p-0 [color-scheme:dark]"
                     />
                 ) : (
                     <button onClick={(e) => { e.preventDefault(); setIsEditingDueDate(true); }} disabled={task.completed} className="flex items-center gap-1 disabled:opacity-50">
