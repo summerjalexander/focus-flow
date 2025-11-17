@@ -1,7 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Subtask } from "../types";
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = import.meta.env.VITE_GOOGLE_API_KEY;
 
 if (!API_KEY) {
   console.warn("API_KEY is not set. Please set it in your environment variables.");
