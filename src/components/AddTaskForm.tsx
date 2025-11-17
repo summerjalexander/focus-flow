@@ -66,7 +66,7 @@ const AddTaskForm: React.FC<AddTaskFormProps> = ({ onAddTask, taskCount, categor
                             type="date"
                             value={dueDate}
                             onChange={(e) => setDueDate(e.target.value)}
-                            className="w-full bg-transparent border-2 border-[#69adaf]/50 rounded-lg py-2 px-4 text-sm text-[#f7f7f7] placeholder-[#69adaf]/70 focus:outline-none focus:ring-1 focus:ring-[#ee6650] focus:border-[#ee6650] transition duration-200"
+                            className="w-full bg-transparent border-2 border-[#69adaf]/50 rounded-lg py-2 px-4 text-sm text-[#f7f7f7] placeholder-[#69adaf]/70 focus:outline-none focus:ring-1 focus:ring-[#ee6650] focus:border-[#ee6650] transition duration-200 [color-scheme:dark]"
                         />
                     </div>
                 </div>
