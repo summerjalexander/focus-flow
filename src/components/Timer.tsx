@@ -53,7 +53,7 @@ const Timer: React.FC<TimerProps> = ({ session, onPause, onReset, onLogDistracti
   
   return (
     <div className="my-6 p-6 bg-[#007370]/10 rounded-xl border border-[#69adaf] text-center">
-      <p className="text-[#69adaf] mb-4 h-12 flex items-center justify-center">{getTitle()}</p>
+      <p className="text-[#69adaf] mb-4 min-h-[4rem] flex items-center justify-center">{getTitle()}</p>
       <div className="relative w-40 h-40 sm:w-48 sm:h-48 mx-auto flex items-center justify-center">
         <svg className="absolute w-full h-full" viewBox="0 0 100 100">
           <circle className="text-[#69adaf]/30" strokeWidth="7" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50" />

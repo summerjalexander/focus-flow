@@ -2,81 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ADHD Focus Flow</title>
-
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon" />
-
-    <!-- Google Font -->
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Import map (AI Studio compatibility) -->
-    <script type="importmap">
-      {
-        "imports": {
-          "react/": "https://aistudiocdn.com/react@^19.2.0/",
-          "react": "https://aistudiocdn.com/react@^19.2.0",
-          "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-          "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0",
-          "vite": "https://aistudiocdn.com/vite@^7.1.12",
-          "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.0",
-          "uuid": "https://aistudiocdn.com/uuid@^13.0.0"
-        }
-      }
-    </script>
-
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-      }
-
-      @keyframes draw-check {
-        from {
-          stroke-dashoffset: 25;
-        }
-        to {
-          stroke-dashoffset: 0;
-        }
-      }
-
-      .checkmark-path {
-        stroke-dasharray: 25;
-        stroke-dashoffset: 25;
-        animation: draw-check 0.3s
-          cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-      }
-
-      @keyframes celebrate-bg {
-        0% {
-          background-position: 200% 0;
-        }
-        100% {
-          background-position: -200% 0;
-        }
-      }
-
-      .animate-celebrate {
-        background-image: linear-gradient(
-          90deg,
-          rgba(0, 115, 112, 0.2) 0%,
-          rgba(238, 102, 80, 0.4) 25%,
-          rgba(0, 115, 112, 0.4) 50%,
-          rgba(238, 102, 80, 0.4) 75%,
-          rgba(0, 115, 112, 0.2) 100%
-        );
-        background-size: 200% 100%;
-        animation: celebrate-bg 1.5s ease-in-out forwards;
-      }
-    </style>
-  </head>
-
+    <script src="https://cdn.tailwindcss.com"></script>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.29.1",
+    "uuid": "https://aistudiocdn.com/uuid@^13.0.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.2",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
   <body>
     <div id="root"></div>
-    <!-- Correct entry path for Vite -->
     <script type="module" src="/src/index.tsx"></script>
-  </body>
+  <script type="module" src="/index.tsx"></script>
+</body>
 </html>

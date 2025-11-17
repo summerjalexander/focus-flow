@@ -8,7 +8,7 @@ import TaskList from './components/TaskList';
 import AddTaskForm from './components/AddTaskForm';
 import EncouragementModal from './components/EncouragementModal';
 import ProgressBar from './components/ProgressBar';
-import { RefreshCwIcon, ShareIcon } from './components/Icons';
+import { ShareIcon } from './components/Icons';
 import Timer from './components/Timer';
 import useFocusTimer from './hooks/useFocusTimer';
 import FloatingActionButton from './components/FloatingActionButton';
@@ -16,6 +16,7 @@ import BrainDump from './components/BrainDump';
 import AmbientSounds from './components/AmbientSounds';
 import ProgressCalendar from './components/ProgressCalendar';
 import CategoryFilter from './components/CategoryFilter';
+import CarryOverBanner from './components/CarryOverBanner';
 
 const formatDate = (date: Date): string => {
   return date.toISOString().split('T')[0];
@@ -36,6 +37,7 @@ const App: React.FC = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [isCarryOverDismissed, setIsCarryOverDismissed] = useState(false);
 
   const { focusSession, startTimer, pauseTimer, resetTimer, adjustTimer } = useFocusTimer();
 
@@ -128,6 +130,19 @@ const App: React.FC = () => {
     updateTasksForDate(dateKey, currentTasks.filter(task => task.id !== id));
   };
   
+  const handleReorderTasks = (draggedId: string, droppedOnId: string) => {
+    const tasks = [...currentTasks];
+    const draggedIndex = tasks.findIndex(task => task.id === draggedId);
+    const droppedOnIndex = tasks.findIndex(task => task.id === droppedOnId);
+
+    if (draggedIndex === -1 || droppedOnIndex === -1) return;
+    
+    const [draggedItem] = tasks.splice(draggedIndex, 1);
+    tasks.splice(droppedOnIndex, 0, draggedItem);
+
+    updateTasksForDate(dateKey, tasks);
+  };
+
   // Subtask handlers
   const handleAddSubtask = (taskId: string, text: string) => {
     const newSubtask: Subtask = { id: uuidv4(), text, completed: false };
@@ -263,6 +278,7 @@ const App: React.FC = () => {
     resetTimer();
     setActiveCategory(null);
     setCurrentDate(date);
+    setIsCarryOverDismissed(false);
   };
 
   const carryOverSource = useMemo(() => {
@@ -316,6 +332,10 @@ const App: React.FC = () => {
 
     return `Carry over ${count} unfinished task${count > 1 ? 's' : ''} ${dateText}`;
   }, [carryOverSource, currentTasks.length, currentDate]);
+
+  const handleDismissCarryOver = () => {
+    setIsCarryOverDismissed(true);
+  };
 
   const handleShareProgress = async () => {
     const dateString = currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -391,7 +411,7 @@ const App: React.FC = () => {
             tasksByDate={tasksByDate}
         />
         
-        <main className="bg-[#060644]/50 backdrop-blur-sm border border-[#69adaf]/50 rounded-xl p-4 sm:p-6 shadow-2xl shadow-black/20">
+        <main className="bg-[#060644]/50 backdrop-blur-sm border border-[#69adaf]/50 rounded-xl p-4 sm:p-6 shadow-2xl shadow-black/20 pb-24">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-[#69adaf]">Daily Priorities</h3>
             <div className="flex items-center gap-2">
@@ -435,17 +455,17 @@ const App: React.FC = () => {
             onContinueTaskTomorrow={handleContinueTaskTomorrow}
             onSetTaskDueDate={handleSetTaskDueDate}
             onUpdateTaskNotes={handleUpdateTaskNotes}
+            onReorderTasks={handleReorderTasks}
           />
 
           <AddTaskForm onAddTask={handleAddTask} taskCount={currentTasks.length} categories={allCategories} />
           
-          {carryOverSource && currentTasks.length < MAX_TASKS && (
-            <div className="mt-6 text-center">
-              <button onClick={handleCarryOverTasks} className="bg-[#69adaf]/10 text-[#69adaf] font-semibold py-2 px-4 rounded-lg hover:bg-[#69adaf]/20 transition-colors duration-200 flex items-center justify-center mx-auto text-sm">
-                <RefreshCwIcon className="w-4 h-4 mr-2" />
-                {getCarryOverMessage()}
-              </button>
-            </div>
+          {!isCarryOverDismissed && carryOverSource && currentTasks.length < MAX_TASKS && (
+            <CarryOverBanner 
+              message={getCarryOverMessage()}
+              onCarryOver={handleCarryOverTasks}
+              onDismiss={handleDismissCarryOver}
+            />
           )}
         </main>
       </div>

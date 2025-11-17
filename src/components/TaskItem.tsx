@@ -1,6 +1,6 @@
 import React, { useState, KeyboardEvent, useEffect, useRef } from 'react';
 import { Task } from '../types';
-import { TrashIcon, PlayIcon, SparklesIcon, ChevronDownIcon, PlusIcon, FastForwardIcon, CalendarIcon } from './Icons';
+import { TrashIcon, PlayIcon, SparklesIcon, ChevronDownIcon, PlusIcon, FastForwardIcon, CalendarIcon, GripVerticalIcon } from './Icons';
 import SubtaskItem from './SubtaskItem';
 
 interface TaskItemProps {
@@ -16,10 +16,13 @@ interface TaskItemProps {
   onGenerateSubtasks: (taskId: string, taskText: string) => Promise<void>;
   onSetTaskDueDate: (taskId: string, dueDate: string | null) => void;
   onUpdateTaskNotes: (taskId: string, notes: string) => void;
+  draggedTaskId: string | null;
+  setDraggedTaskId: (id: string | null) => void;
+  onReorderTasks: (draggedId: string, droppedOnId: string) => void;
 }
 
 const TaskItem: React.FC<TaskItemProps> = (props) => {
-  const { task, onToggleComplete, onDelete, onStartTimer, activeTaskId, onAddSubtask, onToggleSubtask, onDeleteSubtask, onGenerateSubtasks, onContinueTaskTomorrow, onSetTaskDueDate, onUpdateTaskNotes } = props;
+  const { task, onToggleComplete, onDelete, onStartTimer, activeTaskId, onAddSubtask, onToggleSubtask, onDeleteSubtask, onGenerateSubtasks, onContinueTaskTomorrow, onSetTaskDueDate, onUpdateTaskNotes, draggedTaskId, setDraggedTaskId, onReorderTasks } = props;
   
   const isTimerActiveForThisTask = activeTaskId === task.id;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -31,6 +34,7 @@ const TaskItem: React.FC<TaskItemProps> = (props) => {
   const [isEditingDueDate, setIsEditingDueDate] = useState(false);
   const [isConfirmingMove, setIsConfirmingMove] = useState(false);
   const prevCompleted = useRef(task.completed);
+  const [isDragOver, setIsDragOver] = useState(false);
 
   useEffect(() => {
     if (task.completed && !prevCompleted.current) {
@@ -97,6 +101,43 @@ const TaskItem: React.FC<TaskItemProps> = (props) => {
   
   const toggleQuickAdd = () => setIsQuickAddingSubtask(prev => !prev);
 
+  // Drag and Drop handlers
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    if (task.completed) return;
+    e.dataTransfer.setData('taskId', task.id);
+    setDraggedTaskId(task.id);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedTaskId(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (draggedTaskId && draggedTaskId !== task.id) {
+      setIsDragOver(true);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const draggedId = e.dataTransfer.getData('taskId');
+    if (draggedId && draggedId !== task.id) {
+      onReorderTasks(draggedId, task.id);
+    }
+    handleDragEnd();
+  };
+
+
   const subtaskInputForm = (
     <div className={`mt-2 ${isExpanded ? 'mb-3' : ''}`}>
         <div className="flex items-center space-x-2 pl-8">
@@ -125,17 +166,42 @@ const TaskItem: React.FC<TaskItemProps> = (props) => {
   );
 
   const getContainerClasses = () => {
-    let baseClasses = 'rounded-lg transition-all duration-500 ease-in-out transform';
+    let baseClasses = 'rounded-lg transition-all duration-300 ease-in-out transform';
     if (isTimerActiveForThisTask) baseClasses += ' ring-2 ring-[#ee6650]';
+    
+    if (task.id === draggedTaskId) {
+        return `${baseClasses} opacity-40 scale-105`;
+    }
+    
     if (justCompleted) return `${baseClasses} animate-celebrate scale-100`;
     if (task.completed) return `${baseClasses} bg-[#060644]/50 opacity-60 scale-95`;
     if (isPartiallyComplete) return `${baseClasses} bg-[#007370]/20 border-l-4 border-[#ee6650] scale-100`;
+
+    if (isDragOver) {
+        return `${baseClasses} bg-[#007370]/30 scale-105`;
+    }
+
     return `${baseClasses} bg-[#007370]/20 scale-100`;
   };
 
   return (
-    <div className={getContainerClasses()}>
+    <div 
+        className={getContainerClasses()}
+        onDragOver={handleDragOver}
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+    >
       <div className="flex items-center p-4">
+        <div 
+            className={`p-1 text-gray-500 cursor-grab ${task.completed ? 'opacity-30 cursor-not-allowed' : 'hover:text-white'}`}
+            draggable={!task.completed}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            aria-label={`Drag to reorder task: ${task.text}`}
+        >
+            <GripVerticalIcon className="w-5 h-5" />
+        </div>
         <button onClick={() => setIsExpanded(!isExpanded)} className="p-1 text-[#69adaf] hover:text-[#f7f7f7]">
           <ChevronDownIcon className={`w-5 h-5 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${task.subtasks.length === 0 ? 'opacity-30' : ''}`} />
         </button>
@@ -194,53 +260,55 @@ const TaskItem: React.FC<TaskItemProps> = (props) => {
           </div>
         </label>
         
-        <button onClick={toggleQuickAdd} className="ml-4 text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2 disabled:opacity-50" disabled={task.completed} aria-label={`Add sub-task for: ${task.text}`} title="Add sub-task">
-            <PlusIcon className="w-5 h-5" />
-        </button>
-        <button onClick={() => onStartTimer(task.id, task.text)} className="ml-2 text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={task.completed} aria-label={`Start focus timer for: ${task.text}`} title="Start focus timer">
-          <PlayIcon className="w-5 h-5" />
-        </button>
-        {!task.completed && (
-            <div className="relative">
-                <button 
-                    onClick={() => setIsConfirmingMove(true)}
-                    className="ml-2 text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2"
-                    aria-label={`Continue task '${task.text}' tomorrow`}
-                    title="Continue task tomorrow"
-                >
-                    <FastForwardIcon className="w-5 h-5" />
-                </button>
-                {isConfirmingMove && (
-                    <div className="absolute top-full right-0 mt-2 p-3 bg-[#060644] border border-[#69adaf] rounded-lg shadow-xl z-10 w-64 text-left">
-                        <p className="text-sm text-[#f7f7f7]">
-                            {isPartiallyComplete
-                                ? "Continue this task tomorrow? Completed steps will stay on today's list."
-                                : "Move this task to tomorrow's list?"}
-                        </p>
-                        <div className="flex justify-end gap-2 mt-3">
-                            <button 
-                                onClick={() => setIsConfirmingMove(false)} 
-                                className="px-3 py-1 text-xs rounded bg-[#69adaf]/20 hover:bg-[#69adaf]/40 text-white"
-                            >
-                                Cancel
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    onContinueTaskTomorrow(task.id);
-                                    setIsConfirmingMove(false);
-                                }}
-                                className="px-3 py-1 text-xs rounded bg-[#ee6650] hover:bg-[#d95a46] text-white"
-                            >
-                                Confirm
-                            </button>
+        <div className="flex-shrink-0 flex items-center ml-2 space-x-0 sm:space-x-1">
+            <button onClick={toggleQuickAdd} className="text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2 disabled:opacity-50" disabled={task.completed} aria-label={`Add sub-task for: ${task.text}`} title="Add sub-task">
+                <PlusIcon className="w-5 h-5" />
+            </button>
+            <button onClick={() => onStartTimer(task.id, task.text)} className="text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2 disabled:opacity-50 disabled:cursor-not-allowed" disabled={task.completed} aria-label={`Start focus timer for: ${task.text}`} title="Start focus timer">
+              <PlayIcon className="w-5 h-5" />
+            </button>
+            {!task.completed && (
+                <div className="relative">
+                    <button 
+                        onClick={() => setIsConfirmingMove(true)}
+                        className="text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2"
+                        aria-label={`Continue task '${task.text}' tomorrow`}
+                        title="Continue task tomorrow"
+                    >
+                        <FastForwardIcon className="w-5 h-5" />
+                    </button>
+                    {isConfirmingMove && (
+                        <div className="absolute top-full right-0 mt-2 p-3 bg-[#060644] border border-[#69adaf] rounded-lg shadow-xl z-10 w-56 sm:w-64 text-left">
+                            <p className="text-sm text-[#f7f7f7]">
+                                {isPartiallyComplete
+                                    ? "Continue this task tomorrow? Completed steps will stay on today's list."
+                                    : "Move this task to tomorrow's list?"}
+                            </p>
+                            <div className="flex justify-end gap-2 mt-3">
+                                <button 
+                                    onClick={() => setIsConfirmingMove(false)} 
+                                    className="px-3 py-1 text-xs rounded bg-[#69adaf]/20 hover:bg-[#69adaf]/40 text-white"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        onContinueTaskTomorrow(task.id);
+                                        setIsConfirmingMove(false);
+                                    }}
+                                    className="px-3 py-1 text-xs rounded bg-[#ee6650] hover:bg-[#d95a46] text-white"
+                                >
+                                    Confirm
+                                </button>
+                            </div>
                         </div>
-                    </div>
-                )}
-            </div>
-        )}
-        <button onClick={() => onDelete(task.id)} className="ml-2 text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2" aria-label={`Delete task: ${task.text}`} title="Delete task">
-          <TrashIcon className="w-5 h-5" />
-        </button>
+                    )}
+                </div>
+            )}
+            <button onClick={() => onDelete(task.id)} className="text-[#69adaf] hover:text-[#ee6650] transition-colors duration-200 p-2" aria-label={`Delete task: ${task.text}`} title="Delete task">
+              <TrashIcon className="w-5 h-5" />
+            </button>
+        </div>
       </div>
       
       {(isQuickAddingSubtask || isExpanded) && (

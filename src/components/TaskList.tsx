@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Task } from '../types';
 import TaskItem from './TaskItem';
 
@@ -15,10 +15,13 @@ interface TaskListProps {
   onGenerateSubtasks: (taskId: string, taskText: string) => Promise<void>;
   onSetTaskDueDate: (taskId: string, dueDate: string | null) => void;
   onUpdateTaskNotes: (taskId: string, notes: string) => void;
+  onReorderTasks: (draggedId: string, droppedOnId: string) => void;
 }
 
 const TaskList: React.FC<TaskListProps> = (props) => {
-  const { tasks, onToggleComplete, onDelete, onStartTimer, activeTaskId, onAddSubtask, onToggleSubtask, onDeleteSubtask, onGenerateSubtasks, onContinueTaskTomorrow, onSetTaskDueDate, onUpdateTaskNotes } = props;
+  const { tasks, onReorderTasks, ...restOfProps } = props;
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+
 
   if (tasks.length === 0) {
     return (
@@ -35,17 +38,10 @@ const TaskList: React.FC<TaskListProps> = (props) => {
         <TaskItem
           key={task.id}
           task={task}
-          onToggleComplete={onToggleComplete}
-          onDelete={onDelete}
-          onStartTimer={onStartTimer}
-          activeTaskId={activeTaskId}
-          onAddSubtask={onAddSubtask}
-          onToggleSubtask={onToggleSubtask}
-          onDeleteSubtask={onDeleteSubtask}
-          onGenerateSubtasks={onGenerateSubtasks}
-          onContinueTaskTomorrow={onContinueTaskTomorrow}
-          onSetTaskDueDate={onSetTaskDueDate}
-          onUpdateTaskNotes={onUpdateTaskNotes}
+          {...restOfProps}
+          draggedTaskId={draggedTaskId}
+          setDraggedTaskId={setDraggedTaskId}
+          onReorderTasks={onReorderTasks}
         />
       ))}
     </div>

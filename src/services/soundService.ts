@@ -1,6 +1,5 @@
 // Fix: Replaced the entire file with a programmatic sound generation service
-// to resolve the missing 'FOREST_SOUND' export and align with a more modern
-// implementation found in duplicate source files. All sounds are now generated
+// to resolve missing sound asset exports. All sounds are now generated
 // using the Web Audio API, removing the need for base64-encoded assets.
 
 let audioContext: AudioContext | null = null;
