@@ -52,21 +52,21 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrevDay, onNextDay, onSe
             )}
         </div>
       <p className="text-base sm:text-lg text-[#69adaf] mt-2">Your Daily Priority Checklist</p>
-      <div className="flex items-center justify-between w-full max-w-xs sm:max-w-sm mx-auto mt-6">
+      <div className="flex items-center justify-center mt-6 gap-4 sm:gap-6">
         <button
           onClick={onPrevDay}
           className="p-2 rounded-full bg-[#69adaf]/20 hover:bg-[#69adaf]/40 transition-colors duration-200"
           aria-label="Previous day"
         >
-          <ChevronLeftIcon className="w-6 h-6" />
+          <ChevronLeftIcon className="w-6 h-6 text-[#f7f7f7]" />
         </button>
         <div className="text-center">
             <button 
               onClick={() => setIsDatePickerOpen(true)}
               className="flex items-center justify-center gap-2 text-base sm:text-xl font-bold text-[#f7f7f7] hover:text-[#ee6650] transition-colors"
             >
-              <CalendarDaysIcon className="w-5 h-5 flex-shrink-0" />
-              <div>
+              <CalendarDaysIcon className="w-5 h-5 flex-shrink-0 text-[#f7f7f7]" />
+              <div className="text-[#f7f7f7]">
                 <span className="hidden sm:block">{formattedDate}</span>
                 <span className="block sm:hidden">{shortFormattedDate}</span>
               </div>
@@ -88,7 +88,7 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrevDay, onNextDay, onSe
           className="p-2 rounded-full bg-[#69adaf]/20 hover:bg-[#69adaf]/40 transition-colors duration-200"
           aria-label="Next day"
         >
-          <ChevronRightIcon className="w-6 h-6" />
+          <ChevronRightIcon className="w-6 h-6 text-[#f7f7f7]" />
         </button>
       </div>
       <DatePicker
