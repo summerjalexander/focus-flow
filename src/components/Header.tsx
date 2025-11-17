@@ -22,6 +22,12 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrevDay, onNextDay, onSe
     month: 'short',
     day: 'numeric',
   }).format(currentDate);
+
+  const shortFormattedDate = new Intl.DateTimeFormat('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  }).format(currentDate);
   
   const handleDateSelect = (date: Date) => {
     onSetDate(date);
@@ -46,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrevDay, onNextDay, onSe
             )}
         </div>
       <p className="text-base sm:text-lg text-[#69adaf] mt-2">Your Daily Priority Checklist</p>
-      <div className="flex items-center justify-center mt-6 space-x-4">
+      <div className="flex items-center justify-between w-full max-w-xs sm:max-w-sm mx-auto mt-6">
         <button
           onClick={onPrevDay}
           className="p-2 rounded-full bg-[#69adaf]/20 hover:bg-[#69adaf]/40 transition-colors duration-200"
@@ -57,13 +63,16 @@ const Header: React.FC<HeaderProps> = ({ currentDate, onPrevDay, onNextDay, onSe
         <div className="text-center">
             <button 
               onClick={() => setIsDatePickerOpen(true)}
-              className="flex items-center gap-2 text-xl sm:text-2xl font-bold tracking-wide text-[#f7f7f7] hover:text-[#ee6650] transition-colors"
+              className="flex items-center justify-center gap-2 text-base sm:text-xl font-bold text-[#f7f7f7] hover:text-[#ee6650] transition-colors"
             >
-              <CalendarDaysIcon className="w-5 h-5" />
-              <h2>{formattedDate}</h2>
+              <CalendarDaysIcon className="w-5 h-5 flex-shrink-0" />
+              <div>
+                <span className="hidden sm:block">{formattedDate}</span>
+                <span className="block sm:hidden">{shortFormattedDate}</span>
+              </div>
             </button>
             {isToday ? (
-              <span className="text-sm font-semibold text-[#ee6650]">Today</span>
+              <span className="text-sm font-semibold text-[#ee6650] mt-1 inline-block">Today</span>
             ) : (
               <button 
                 onClick={handleGoToToday}
