@@ -1,9 +1,11 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Subtask } from "../types";
 
+// FIX: Per coding guidelines, the API key must be obtained from process.env.API_KEY. This also resolves the TypeScript error.
 const API_KEY = process.env.API_KEY;
 
 if (!API_KEY) {
+  // FIX: Updated the warning message to reflect the correct environment variable name.
   console.warn("API_KEY is not set. Please set it in your environment variables.");
 }
 
