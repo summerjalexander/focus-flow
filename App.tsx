@@ -220,8 +220,6 @@ const App: React.FC = () => {
   };
   const handleMoveBrainDumpToToday = (task: BrainDumpTask) => {
     handleAddTask(task.text);
-    // We only delete from brain dump if added successfully or pending confirmation?
-    // Let's delete it immediately for better UX, assuming user wants it moved.
     handleDeleteBrainDumpTask(task.id);
   };
 
@@ -308,17 +306,30 @@ const App: React.FC = () => {
   const handleCarryOverTasks = useCallback(() => {
     if (!carryOverSource) return;
 
-    const tasksToMove = carryOverSource.tasks.map(task => ({ ...task, id: uuidv4(), subtasks: task.subtasks.map(st => ({ ...st, id: uuidv4() })) }));
-    
-    // Add to today
-    updateTasksForDate(dateKey, [...currentTasks, ...tasksToMove]);
+    const sourceDateKey = carryOverSource.dateKey;
+    const tasksToMove = carryOverSource.tasks.map(task => ({
+         ...task, 
+         id: uuidv4(), 
+         subtasks: task.subtasks.map(st => ({ ...st, id: uuidv4() })) 
+    }));
 
-    // Remove from source date (only keep completed ones)
-    const sourceDateTasks = tasksByDate[carryOverSource.dateKey] || [];
-    const completedSourceTasks = sourceDateTasks.filter(t => t.completed);
-    updateTasksForDate(carryOverSource.dateKey, completedSourceTasks);
+    setTasksByDate(prev => {
+        const currentTodayTasks = prev[dateKey] || [];
+        const sourceDateTasks = prev[sourceDateKey] || [];
+        
+        // Keep only completed tasks in the source date
+        const newSourceTasks = sourceDateTasks.filter(t => t.completed);
+        
+        // Add moved tasks to today
+        const newTodayTasks = [...currentTodayTasks, ...tasksToMove];
 
-  }, [carryOverSource, currentTasks, dateKey, tasksByDate]);
+        return {
+            ...prev,
+            [dateKey]: newTodayTasks,
+            [sourceDateKey]: newSourceTasks
+        };
+    });
+  }, [carryOverSource, dateKey]);
 
   const handleDismissCarryOver = useCallback(() => {
       if (carryOverSource) {
