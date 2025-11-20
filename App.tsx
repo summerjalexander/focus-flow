@@ -8,7 +8,7 @@ import TaskList from './components/TaskList';
 import AddTaskForm from './components/AddTaskForm';
 import EncouragementModal from './components/EncouragementModal';
 import ProgressBar from './components/ProgressBar';
-import { RefreshCwIcon, ShareIcon } from './components/Icons';
+import { ShareIcon } from './components/Icons';
 import Timer from './components/Timer';
 import useFocusTimer from './hooks/useFocusTimer';
 import FloatingActionButton from './components/FloatingActionButton';
@@ -16,6 +16,8 @@ import BrainDump from './components/BrainDump';
 import AmbientSounds from './components/AmbientSounds';
 import ProgressCalendar from './components/ProgressCalendar';
 import CategoryFilter from './components/CategoryFilter';
+import CarryOverBanner from './components/CarryOverBanner';
+import OverloadWarningModal from './components/OverloadWarningModal';
 
 const formatDate = (date: Date): string => {
   return date.toISOString().split('T')[0];
@@ -25,6 +27,7 @@ const App: React.FC = () => {
   const [tasksByDate, setTasksByDate] = useState<TasksByDate>(() => JSON.parse(localStorage.getItem('tasksByDate') || '{}'));
   const [brainDumpTasks, setBrainDumpTasks] = useState<BrainDumpTask[]>(() => JSON.parse(localStorage.getItem('brainDumpTasks') || '[]'));
   const [streakData, setStreakData] = useState<StreakData>(() => JSON.parse(localStorage.getItem('streakData') || '{"current": 0, "longest": 0, "lastCompletedDate": null}'));
+  const [dismissedCarryOverDates, setDismissedCarryOverDates] = useState<string[]>([]);
 
   const [currentDate, setCurrentDate] = useState(new Date());
   const [encouragement, setEncouragement] = useState('');
@@ -36,6 +39,10 @@ const App: React.FC = () => {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  
+  // Overload Warning State
+  const [showOverloadWarning, setShowOverloadWarning] = useState(false);
+  const [pendingTask, setPendingTask] = useState<{text: string, category?: string, dueDate?: string} | null>(null);
 
   const { focusSession, startTimer, pauseTimer, resetTimer, adjustTimer } = useFocusTimer();
 
@@ -81,8 +88,7 @@ const App: React.FC = () => {
     setIsLoading(false);
   };
 
-  const handleAddTask = (text: string, category?: string, dueDate?: string) => {
-    if (currentTasks.length < MAX_TASKS) {
+  const performAddTask = (text: string, category?: string, dueDate?: string) => {
       const newTask: Task = { 
         id: uuidv4(), 
         text, 
@@ -92,7 +98,28 @@ const App: React.FC = () => {
         dueDate: dueDate || undefined,
       };
       updateTasksForDate(dateKey, [...currentTasks, newTask]);
+  }
+
+  const handleAddTask = (text: string, category?: string, dueDate?: string) => {
+    if (currentTasks.length >= MAX_TASKS) {
+        setPendingTask({ text, category, dueDate });
+        setShowOverloadWarning(true);
+    } else {
+        performAddTask(text, category, dueDate);
     }
+  };
+
+  const confirmOverloadTask = () => {
+      if (pendingTask) {
+          performAddTask(pendingTask.text, pendingTask.category, pendingTask.dueDate);
+          setPendingTask(null);
+      }
+      setShowOverloadWarning(false);
+  };
+
+  const cancelOverloadTask = () => {
+      setPendingTask(null);
+      setShowOverloadWarning(false);
   };
 
   const handleToggleComplete = (id: string) => {
@@ -192,12 +219,10 @@ const App: React.FC = () => {
     setBrainDumpTasks(prev => prev.filter(t => t.id !== id));
   };
   const handleMoveBrainDumpToToday = (task: BrainDumpTask) => {
-    if (currentTasks.length < MAX_TASKS) {
-      handleAddTask(task.text);
-      handleDeleteBrainDumpTask(task.id);
-    } else {
-        alert("Daily task limit reached. Complete a task to add another.");
-    }
+    handleAddTask(task.text);
+    // We only delete from brain dump if added successfully or pending confirmation?
+    // Let's delete it immediately for better UX, assuming user wants it moved.
+    handleDeleteBrainDumpTask(task.id);
   };
 
   const handleContinueTaskTomorrow = (taskId: string) => {
@@ -209,11 +234,7 @@ const App: React.FC = () => {
     const tomorrowDateKey = formatDate(tomorrow);
     const tomorrowTasks = tasksByDate[tomorrowDateKey] || [];
 
-    if (tomorrowTasks.length >= MAX_TASKS) {
-        alert("Tomorrow's task list is full.");
-        return;
-    }
-
+    // Logic for moving partial or full task
     const completedSubtasks = taskToMove.subtasks.filter(st => st.completed);
     const incompleteSubtasks = taskToMove.subtasks.filter(st => !st.completed);
 
@@ -267,7 +288,7 @@ const App: React.FC = () => {
 
   const carryOverSource = useMemo(() => {
     const previousDateKeys = Object.keys(tasksByDate)
-      .filter(key => key < dateKey)
+      .filter(key => key < dateKey && !dismissedCarryOverDates.includes(key))
       .sort()
       .reverse();
 
@@ -275,26 +296,35 @@ const App: React.FC = () => {
       const unfinishedTasks = (tasksByDate[prevDateKey] || []).filter(task => !task.completed);
       if (unfinishedTasks.length > 0) {
         return {
+          dateKey: prevDateKey,
           date: new Date(prevDateKey + 'T12:00:00'), // Use noon to avoid timezone day-off issues
           tasks: unfinishedTasks,
         };
       }
     }
     return null;
-  }, [tasksByDate, dateKey]);
+  }, [tasksByDate, dateKey, dismissedCarryOverDates]);
 
   const handleCarryOverTasks = useCallback(() => {
     if (!carryOverSource) return;
 
-    const availableSlots = MAX_TASKS - currentTasks.length;
-    if (availableSlots <= 0) return;
+    const tasksToMove = carryOverSource.tasks.map(task => ({ ...task, id: uuidv4(), subtasks: task.subtasks.map(st => ({ ...st, id: uuidv4() })) }));
+    
+    // Add to today
+    updateTasksForDate(dateKey, [...currentTasks, ...tasksToMove]);
 
-    const toCarry = carryOverSource.tasks
-      .slice(0, availableSlots)
-      .map(task => ({ ...task, id: uuidv4(), subtasks: task.subtasks.map(st => ({ ...st, id: uuidv4() })) }));
+    // Remove from source date (only keep completed ones)
+    const sourceDateTasks = tasksByDate[carryOverSource.dateKey] || [];
+    const completedSourceTasks = sourceDateTasks.filter(t => t.completed);
+    updateTasksForDate(carryOverSource.dateKey, completedSourceTasks);
 
-    updateTasksForDate(dateKey, [...currentTasks, ...toCarry]);
-  }, [carryOverSource, currentTasks, dateKey]);
+  }, [carryOverSource, currentTasks, dateKey, tasksByDate]);
+
+  const handleDismissCarryOver = useCallback(() => {
+      if (carryOverSource) {
+          setDismissedCarryOverDates(prev => [...prev, carryOverSource.dateKey]);
+      }
+  }, [carryOverSource]);
   
   const getCarryOverMessage = useCallback(() => {
     if (!carryOverSource) return '';
@@ -311,11 +341,10 @@ const App: React.FC = () => {
         dateText = `from ${sourceDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}`;
     }
     
-    const availableSlots = MAX_TASKS - currentTasks.length;
-    const count = Math.min(carryOverSource.tasks.length, availableSlots);
+    const count = carryOverSource.tasks.length;
 
-    return `Carry over ${count} unfinished task${count > 1 ? 's' : ''} ${dateText}`;
-  }, [carryOverSource, currentTasks.length, currentDate]);
+    return `Move ${count} unfinished task${count > 1 ? 's' : ''} ${dateText} to today?`;
+  }, [carryOverSource, currentDate]);
 
   const handleShareProgress = async () => {
     const dateString = currentDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -356,6 +385,20 @@ const App: React.FC = () => {
         const mailtoLink = `mailto:?subject=${encodeURIComponent(`Focus Flow Progress for ${dateString}`)}&body=${encodeURIComponent(shareText)}`;
         window.location.href = mailtoLink;
     }
+  };
+  
+  // Drag and Drop Reordering
+  const handleReorderTasks = (draggedId: string, droppedOnId: string) => {
+    const draggedIndex = currentTasks.findIndex(t => t.id === draggedId);
+    const droppedIndex = currentTasks.findIndex(t => t.id === droppedOnId);
+    
+    if (draggedIndex === -1 || droppedIndex === -1 || draggedIndex === droppedIndex) return;
+
+    const newTasks = [...currentTasks];
+    const [reorderedTask] = newTasks.splice(draggedIndex, 1);
+    newTasks.splice(droppedIndex, 0, reorderedTask);
+    
+    updateTasksForDate(dateKey, newTasks);
   };
 
   const completedCount = currentTasks.filter(t => t.completed).length;
@@ -435,17 +478,17 @@ const App: React.FC = () => {
             onContinueTaskTomorrow={handleContinueTaskTomorrow}
             onSetTaskDueDate={handleSetTaskDueDate}
             onUpdateTaskNotes={handleUpdateTaskNotes}
+            onReorderTasks={handleReorderTasks}
           />
 
           <AddTaskForm onAddTask={handleAddTask} taskCount={currentTasks.length} categories={allCategories} />
           
-          {carryOverSource && currentTasks.length < MAX_TASKS && (
-            <div className="mt-6 text-center">
-              <button onClick={handleCarryOverTasks} className="bg-[#69adaf]/10 text-[#69adaf] font-semibold py-2 px-4 rounded-lg hover:bg-[#69adaf]/20 transition-colors duration-200 flex items-center justify-center mx-auto text-sm">
-                <RefreshCwIcon className="w-4 h-4 mr-2" />
-                {getCarryOverMessage()}
-              </button>
-            </div>
+          {carryOverSource && (
+              <CarryOverBanner 
+                  message={getCarryOverMessage()}
+                  onCarryOver={handleCarryOverTasks}
+                  onDismiss={handleDismissCarryOver}
+              />
           )}
         </main>
       </div>
@@ -478,6 +521,12 @@ const App: React.FC = () => {
       {showModal && (
         <EncouragementModal isLoading={isLoading} message={encouragement} onClose={() => setShowModal(false)} />
       )}
+
+      <OverloadWarningModal 
+        isOpen={showOverloadWarning}
+        onConfirm={confirmOverloadTask}
+        onCancel={cancelOverloadTask}
+      />
     </div>
   );
 };
